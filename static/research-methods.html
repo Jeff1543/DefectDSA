@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Identifikasi Metode — DefectDSA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/research.css">
+<link rel="stylesheet" href="css/analysis.css">
+</head>
+<body>
+
+<div class="navbar-wrap">
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo"><img src="img/logo.svg" alt="" class="nav-logo-mark" width="32" height="32" />DefectDSA</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Beranda</a></li>
+      <li><a href="features.html">Fitur</a></li>
+      <li><a href="research-choose.html" class="active">Riset</a></li>
+      <li><a href="dokumentasi.html">Dokumentasi</a></li>
+      <li><a href="about.html">Tentang Kami</a></li>
+      <li><a href="kontak.html">Kontak</a></li>
+    </ul>
+    <a href="research-choose.html" class="btn btn-primary nav-cta">Start Analysis</a>
+  </nav>
+</div>
+
+<div class="container" style="padding-top:24px;">
+
+  <div id="researchStepper" data-active="4"></div>
+
+  <div class="notice notice-warn" id="metGuard" hidden style="margin-bottom:24px;"></div>
+
+  <div class="method-card" id="metCard" hidden>
+    <div class="method-card-head">
+      <h2>Identifikasi Metode Statistik</h2>
+      <p>Sistem menganalisis struktur variabel yang telah Anda pilih untuk menentukan metode statistik yang paling sesuai.</p>
+    </div>
+
+    <div class="method-summary-grid">
+      <div class="method-summary-item">
+        <div class="label">Variabel Dependen</div>
+        <div class="value" id="mDep"></div>
+      </div>
+      <div class="method-summary-item">
+        <div class="label">Variabel Independen</div>
+        <div class="value" id="mInd"></div>
+      </div>
+      <div class="method-summary-item">
+        <div class="label">Variabel Kovariat</div>
+        <div class="value" id="mCov"></div>
+      </div>
+    </div>
+
+    <div class="method-result-box">
+      <div class="eyebrow">METODE YANG DIREKOMENDASIKAN</div>
+      <h2 id="mCode"></h2>
+      <div class="subtitle" id="mFull"></div>
+      <p class="explanation" id="mExplain"></p>
+    </div>
+
+    <h2 class="decision-tree-title">Bagaimana Metode Ditentukan?</h2>
+
+    <div class="decision-tree">
+      <div class="decision-tree-node">Jumlah Variabel Dependen, Faktor &amp; Kovariat</div>
+      <div class="decision-tree-branch">
+        <div class="branch-node">1 variabel dependen</div>
+        <div class="branch-node">≥2 variabel dependen</div>
+      </div>
+      <div class="decision-tree-leaves">
+        <div class="decision-tree-leaf" data-method="ANOVA"><strong>ANOVA</strong><span>1 DV • Tanpa kovariat</span></div>
+        <div class="decision-tree-leaf" data-method="ANCOVA"><strong>ANCOVA</strong><span>1 DV • Dengan kovariat</span></div>
+        <div class="decision-tree-leaf" data-method="MANOVA"><strong>MANOVA</strong><span>≥2 DV • Tanpa kovariat</span></div>
+        <div class="decision-tree-leaf" data-method="MANCOVA"><strong>MANCOVA</strong><span>≥2 DV • Dengan kovariat</span></div>
+        <div class="decision-tree-leaf" data-method="Regresi Linier"><strong>Regresi Linier</strong><span>1 DV • Tanpa faktor • Prediktor numerik</span></div>
+      </div>
+    </div>
+
+    <div class="method-footer-nav">
+      <a href="research-variables.html" class="btn-link">← Kembali ke Pilih Variabel</a>
+      <a href="research-assumptions.html" class="btn btn-primary" id="metNext">Lanjut ke Uji Asumsi →</a>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="nav-logo" style="color:var(--white);">MANCOVA</span>
+        <p>Platform analisis statistik multivariat tercanggih untuk deteksi dini kesehatan kulit ternak. Menggunakan metode statistik lanjutan untuk akurasi riset yang tak tertandingi.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigasi</h4>
+        <ul>
+          <li><a href="index.html">Beranda</a></li>
+          <li><a href="features.html">Fitur</a></li>
+          <li><a href="research-choose.html">Riset</a></li>
+          <li><a href="dokumentasi.html">Dokumentasi</a></li>
+          <li><a href="kontak.html">Kontak</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Informasi</h4>
+        <ul>
+          <li><a href="dokumentasi.html#faq">FAQ</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms &amp; Conditions</a></li>
+          <li><a href="kontak.html">Help Center</a></li>
+          <li><a href="Authentication.html">Portal Peneliti</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Kontak</h4>
+        <ul>
+          <li>Universitas Brawijaya, Malang</li>
+          <li>research@mancova.ac.id</li>
+          <li>+62 341 551611</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 MANCOVA Livestock Analytics. Hak cipta dilindungi undang-undang.</div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/research-state.js"></script>
+<script src="js/script.js"></script>
+<script src="js/methods.js"></script>
+</body>
+</html>
