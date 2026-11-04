@@ -7,3 +7,8 @@ __pycache__/
 
 # Ada Library Information
 *.ali
+
+node_modules/
+tests/.tmp/
+tests/.report/
+tests/.results/

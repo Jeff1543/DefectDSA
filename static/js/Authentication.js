@@ -32,9 +32,9 @@ function setMode(next) {
   mode = next;
   const reg = mode === "register";
   nameField.style.display = reg ? "" : "none";
-  portalTitle.textContent = reg ? "Buat Akun Peneliti" : "Portal Peneliti";
+  portalTitle.textContent = reg ? "Buat akun peneliti" : "Portal Peneliti";
   portalSubtitle.innerHTML = reg
-    ? "Daftarkan akun untuk menyimpan riwayat analisis<br>dan mengakses dashboard peneliti."
+    ? "Daftarkan akun untuk menyimpan riwayat analisis dan mengakses dashboard peneliti."
     : SUBTITLE_LOGIN;
   submitBtn.textContent = reg ? "Daftar" : "Masuk";
   modeToggle.textContent = reg ? "Masuk" : "Daftar";
@@ -52,6 +52,7 @@ togglePassword.addEventListener("click", () => {
   const isPassword = password.type === "password";
   password.type = isPassword ? "text" : "password";
   togglePassword.setAttribute("aria-label", isPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi");
+  togglePassword.classList.toggle("on", isPassword);
 });
 
 function clearErrors() {
@@ -61,7 +62,7 @@ function clearErrors() {
 
 function fail(input, errEl, msg) {
   errEl.textContent = msg;
-  input.style.borderColor = "#bd3e3e";
+  input.style.borderColor = "#8a3329";
   return false;
 }
 
@@ -103,7 +104,7 @@ form.addEventListener("submit", async (event) => {
     }
 
     Auth.setSession(data.token, data.user, remember.checked);
-    showStatus("Berhasil. Mengarahkan ke dashboard...", false);
+    showStatus("Berhasil masuk. Membuka dashboard...", false);
     window.location.href = "dashboard.html";
   } catch (err) {
     showStatus(err.message, true);
@@ -134,4 +135,17 @@ forgotLink.addEventListener("click", (event) => {
   } catch (e) {
     Auth.clear();
   }
+})();
+
+
+// Slideshow foto di panel kiri
+(function () {
+  var slides = document.querySelectorAll(".plate-slide");
+  if (slides.length < 2) return;
+  var i = 0;
+  setInterval(function () {
+    slides[i].classList.remove("is-active");
+    i = (i + 1) % slides.length;
+    slides[i].classList.add("is-active");
+  }, 5000);
 })();

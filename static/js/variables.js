@@ -1,7 +1,7 @@
 // ==========================================================================
 // Research — Pilih Variabel: kolom diambil dari file yang benar-benar diunggah.
-// Struktur fleksibel: Dependen >= 1 (numerik), Independen >= 1 (kategorik /
-// kode kelompok), Kovariat opsional (numerik). Metode mengikuti pilihan.
+// Uji (ANOVA/ANCOVA/MANOVA/MANCOVA/Regresi Linier) sudah dipilih di langkah
+// sebelumnya; syarat jumlah variabel tiap kotak mengikuti RS.METHODS[uji].
 // ==========================================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -14,7 +14,36 @@ document.addEventListener("DOMContentLoaded", () => {
     guard.hidden = false;
     return;
   }
+  const METHOD = st.method;
+  const M = RS.METHODS[METHOD];
+  if (!M) {
+    guard.innerHTML = 'Uji statistik belum dipilih. <a href="research-methods.html">Pilih uji</a> terlebih dahulu.';
+    guard.hidden = false;
+    return;
+  }
   main.hidden = false;
+
+  // ---- Bilah uji terpilih + syarat tiap kotak ----
+  document.getElementById("varMethodBar").innerHTML =
+    `<span>Uji yang dipilih: <span class="vm-code">${RS.esc(M.code)}</span><span class="vm-full">(${RS.esc(M.full)})</span></span>` +
+    `<a href="research-methods.html" class="btn-link" style="text-decoration:underline;">Ganti uji</a>`;
+
+  const ZONE_KEY = { "dz-dependent": "dep", "dz-independent": "ind", "dz-covariates": "cov" };
+  const ZONE_NAME = { dep: "variabel Dependen", ind: "variabel Independen (faktor)", cov: METHOD === "Regresi Linier" ? "Kovariat (prediktor)" : "Kovariat" };
+  const setSub = (id, base, r) => {
+    document.getElementById(id).textContent = r.max === 0 ? `${base} — tidak dipakai pada ${METHOD}` : `${base} — ${RS.ruleText(r)}`;
+  };
+  setSub("subDep", "(Respons) numerik", M.rules.dep);
+  setSub("subInd", "(Faktor) kategorik", M.rules.ind);
+  setSub("subCov", METHOD === "Regresi Linier" ? "(Prediktor) numerik" : "(Kontrol) numerik", M.rules.cov);
+  Object.entries(ZONE_KEY).forEach(([id, k]) => {
+    const dz = document.getElementById(id);
+    if (M.rules[k].max === 0) {
+      dz.classList.add("disabled");
+      dz.dataset.example = `Tidak dipakai pada ${METHOD}`;
+      dz.dataset.hint = "Kotak ini dinonaktifkan";
+    }
+  });
 
   const cols = st.profile.columns;
   const colByName = Object.fromEntries(cols.map((c) => [c.name, c]));
@@ -148,7 +177,20 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    const k = ZONE_KEY[dz.id];
+    const rl = M.rules[k];
+    if (rl.max === 0) {
+      setHint(`${METHOD} tidak memakai ${ZONE_NAME[k]}.`, true);
+      return;
+    }
     const oldDz = chip.closest(".dropzone");
+    const othersInZone = [...dz.querySelectorAll(".chip")].filter((c) => c !== chip).length;
+    if (rl.max !== null && othersInZone >= rl.max) {
+      setHint(`${METHOD} hanya memakai ${rl.max} ${ZONE_NAME[k]}. Keluarkan variabel yang ada dulu, lalu coba lagi.`, true);
+      dz.classList.add("invalid");
+      setTimeout(() => dz.classList.remove("invalid"), 1200);
+      return;
+    }
     let wrap = dz.querySelector(".dropzone-chips");
     if (!wrap) {
       dz.innerHTML = "";
@@ -210,10 +252,9 @@ document.addEventListener("DOMContentLoaded", () => {
     refresh();
   });
 
-  // ---- Validasi struktur + pratinjau metode ----
+  // ---- Validasi struktur terhadap uji yang dipilih ----
   const runBtn = document.getElementById("runAnalysisBtn");
   const hint = document.getElementById("varHint");
-  const preview = document.getElementById("methodPreview");
 
   function setHint(text, warn) {
     hint.textContent = text;
@@ -224,6 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function selection() {
     const get = (id) => [...document.querySelectorAll(`#${id} .chip`)].map((c) => c.dataset.var);
     return {
+      method: METHOD,
       dependent: get("dz-dependent"),
       independent: get("dz-independent"),
       covariates: get("dz-covariates"),
@@ -231,36 +273,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function refresh() {
-    const s = selection();
-    const regression = s.independent.length === 0 && s.covariates.length >= 1;
-    const regressionMulti = regression && s.dependent.length > 1;
-    const ok = s.dependent.length >= 1 && (s.independent.length >= 1 || regression) && !regressionMulti;
-    runBtn.disabled = !ok;
-
-    if (regressionMulti) {
-      setHint("Regresi Linier (tanpa faktor) hanya untuk 1 variabel Dependen. Sisakan 1 Dependen, atau tambahkan faktor.", true);
-      preview.hidden = true;
-    } else if (ok) {
-      const m = RS.identifyMethod(s.dependent.length, s.covariates.length, s.independent.length);
-      setHint(
-        regression
-          ? "Tanpa faktor, kovariat berperan sebagai prediktor Regresi Linier."
-          : "Struktur variabel valid. Kovariat bersifat opsional.",
-        false
-      );
-      preview.innerHTML = `Metode yang akan dipakai: <strong>${m.code}</strong>`;
-      preview.hidden = false;
+    const v = RS.validateSelection(METHOD, selection());
+    runBtn.disabled = !v.ok;
+    if (v.errors.length) {
+      setHint(v.errors.join(" "), true);
+    } else if (v.missing.length) {
+      setHint(`Untuk ${METHOD}, lengkapi dahulu: ${v.missing.join("; ")}.`, false);
     } else {
-      const missing = [];
-      if (s.dependent.length < 1) missing.push("minimal 1 variabel Dependen");
-      if (s.independent.length < 1) missing.push("1 variabel Independen (faktor), atau kosongkan faktor dan isi Kovariat untuk Regresi Linier");
-      setHint(`Lengkapi dahulu: ${missing.join(" dan ")}.`, false);
-      preview.hidden = true;
+      setHint(`Struktur variabel sesuai untuk ${METHOD}. Silakan jalankan analisis.`, false);
     }
   }
 
   // ---- Pulihkan pilihan sebelumnya ----
-  if (st.selection) {
+  if (st.selection && st.selection.method === METHOD) {
     const map = { dependent: "dz-dependent", independent: "dz-independent", covariates: "dz-covariates" };
     Object.entries(map).forEach(([key, id]) => {
       (st.selection[key] || []).forEach((name) => {
@@ -274,6 +299,6 @@ document.addEventListener("DOMContentLoaded", () => {
   runBtn.addEventListener("click", () => {
     if (runBtn.disabled) return;
     RS.save({ selection: selection(), result: null, resultKey: null });
-    window.location.href = "research-methods.html";
+    window.location.href = "research-assumptions.html";
   });
 });

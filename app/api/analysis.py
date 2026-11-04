@@ -102,6 +102,22 @@ def analyze(
     if not structure_result["valid"]:
         raise VariableError(" ".join(structure_result["errors"]))
 
+    # 1b. Uji pilihan pengguna harus cocok dengan struktur variabel
+    if request.method:
+        detected = MancovaService.identify_method(
+            len(request.dependent_vars),
+            len(request.covariates),
+            len(request.independent_vars),
+        )["code"]
+        if detected != request.method:
+            raise VariableError(
+                f"Struktur variabel tidak sesuai dengan uji {request.method}: "
+                f"pilihan Anda ({len(request.dependent_vars)} dependen, "
+                f"{len(request.independent_vars)} independen, "
+                f"{len(request.covariates)} kovariat) menghasilkan {detected}. "
+                "Ubah variabel atau pilih uji yang sesuai."
+            )
+
     # 2. Transformasi (opsional) hanya pada salinan data yang diuji
     numeric_roles = set(request.dependent_vars) | set(request.covariates)
     model_df, transform_info = transform_service.apply(

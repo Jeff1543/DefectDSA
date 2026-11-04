@@ -31,6 +31,7 @@
   --shadow-nav: 0px 12px 40px rgba(0, 0, 0, 0.04);
 
   --container-w: 1184px;
+  --navbar-w: 1360px; /* navbar sedikit lebih lebar dari konten */
 }
 
 * {
@@ -107,7 +108,7 @@ img {
 }
 
 .navbar {
-  max-width: var(--container-w);
+  max-width: var(--navbar-w);
   margin: 0 auto;
   display: flex;
   align-items: center;

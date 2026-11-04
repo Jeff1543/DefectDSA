@@ -41,6 +41,87 @@ const RS = {
     localStorage.removeItem(RS.LAST);
   },
 
+  // ------------------------------------------------------------------
+  // Daftar uji yang dipilih PENGGUNA di langkah "Pilih Uji" (sebelum memilih variabel).
+  // rules.{dep|ind|cov} = jumlah variabel yang diizinkan: min, max (null = tak terbatas,
+  // 0 = tidak dipakai). Struktur ini sengaja sama dengan aturan backend
+  // (MancovaService.identify_method), sehingga backend menurunkan metode yang sama.
+  // ------------------------------------------------------------------
+  METHODS: {
+    ANOVA: {
+      code: "ANOVA",
+      full: "Analysis of Variance",
+      tag: "1 respons · tanpa kovariat",
+      desc: "Membandingkan rata-rata satu variabel respons antar kelompok (faktor).",
+      example: "Apakah rata-rata luas defek kulit berbeda antar lokasi?",
+      rules: { dep: { min: 1, max: 1 }, ind: { min: 1, max: null }, cov: { min: 0, max: 0 } },
+    },
+    ANCOVA: {
+      code: "ANCOVA",
+      full: "Analysis of Covariance",
+      tag: "1 respons · dengan kovariat",
+      desc: "Seperti ANOVA, tetapi pengaruh variabel pengganggu (kovariat) dikendalikan.",
+      example: "Apakah luas defek berbeda antar lokasi setelah suhu dikendalikan?",
+      rules: { dep: { min: 1, max: 1 }, ind: { min: 1, max: null }, cov: { min: 1, max: null } },
+    },
+    MANOVA: {
+      code: "MANOVA",
+      full: "Multivariate Analysis of Variance",
+      tag: "≥2 respons · tanpa kovariat",
+      desc: "Membandingkan beberapa variabel respons sekaligus antar kelompok (faktor).",
+      example: "Apakah luas defek dan pertambahan berat berbeda antar perlakuan?",
+      rules: { dep: { min: 2, max: null }, ind: { min: 1, max: null }, cov: { min: 0, max: 0 } },
+    },
+    MANCOVA: {
+      code: "MANCOVA",
+      full: "Multivariate Analysis of Covariance",
+      tag: "≥2 respons · dengan kovariat",
+      desc: "Seperti MANOVA, tetapi pengaruh kovariat dikendalikan.",
+      example: "Apakah luas defek dan berat berbeda antar perlakuan setelah suhu dikendalikan?",
+      rules: { dep: { min: 2, max: null }, ind: { min: 1, max: null }, cov: { min: 1, max: null } },
+    },
+    "Regresi Linier": {
+      code: "Regresi Linier",
+      full: "Linear Regression (Regresi Linier)",
+      tag: "1 respons · tanpa faktor",
+      desc: "Mengukur pengaruh satu atau lebih prediktor numerik terhadap satu variabel respons.",
+      example: "Seberapa besar suhu dan kelembapan memengaruhi luas defek?",
+      rules: { dep: { min: 1, max: 1 }, ind: { min: 0, max: 0 }, cov: { min: 1, max: null } },
+    },
+  },
+
+  // Teks syarat jumlah variabel, mis. "tepat 1", "minimal 2", "tidak dipakai"
+  ruleText(r) {
+    if (r.max === 0) return "tidak dipakai";
+    if (r.max !== null && r.max === r.min) return `tepat ${r.min}`;
+    return `minimal ${r.min}`;
+  },
+
+  // Periksa pilihan variabel terhadap uji yang dipilih.
+  // Mengembalikan { ok, missing: [..], errors: [..] }
+  validateSelection(code, sel) {
+    const m = RS.METHODS[code];
+    if (!m) return { ok: false, missing: ["uji yang akan dipakai"], errors: [] };
+    const label = {
+      dep: "variabel Dependen",
+      ind: "variabel Independen (faktor)",
+      cov: code === "Regresi Linier" ? "Kovariat (prediktor)" : "Kovariat",
+    };
+    const n = { dep: (sel.dependent || []).length, ind: (sel.independent || []).length, cov: (sel.covariates || []).length };
+    const missing = [];
+    const errors = [];
+    ["dep", "ind", "cov"].forEach((k) => {
+      const r = m.rules[k];
+      if (r.max === 0) {
+        if (n[k] > 0) errors.push(`${code} tidak memakai ${label[k]}. Keluarkan variabel dari kotak itu.`);
+      } else {
+        if (n[k] < r.min) missing.push(`${r.min === 1 ? "1" : "minimal " + r.min} ${label[k]}`);
+        if (r.max !== null && n[k] > r.max) errors.push(`${code} hanya memakai ${r.max} ${label[k]}.`);
+      }
+    });
+    return { ok: !missing.length && !errors.length, missing, errors };
+  },
+
   // Aturan yang sama dengan backend (MancovaService.identify_method)
   identifyMethod(nDependent, nCovariates, nIndependent = 1) {
     if (nIndependent === 0 && nCovariates >= 1) {

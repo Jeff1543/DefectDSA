@@ -38,6 +38,13 @@ class CleanRequest(BaseModel):
 class AnalyzeRequest(BaseModel):
     dataset_id: str
 
+    # Uji yang dipilih pengguna lebih dulu di FE (langkah "Pilih Uji").
+    # Opsional agar klien lama tetap jalan; bila diisi, struktur variabel
+    # harus cocok dengan uji ini (divalidasi di endpoint /analyze).
+    method: Literal[
+        "ANOVA", "ANCOVA", "MANOVA", "MANCOVA", "Regresi Linier"
+    ] | None = None
+
     dependent_vars: list[str] = Field(
         ...,
         min_length=1,

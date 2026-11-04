@@ -22,6 +22,17 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  // Uji dipilih lebih dulu; pilihan variabel harus cocok dengan syarat uji tersebut.
+  if (!st.method || !RS.METHODS[st.method]) {
+    showError('Uji statistik belum dipilih. <a href="research-methods.html">Pilih uji</a> terlebih dahulu.');
+    return;
+  }
+  const chk = RS.validateSelection(st.method, sel);
+  if (!chk.ok) {
+    showError(`Pilihan variabel belum sesuai untuk ${esc(st.method)}. ${esc([...chk.errors, ...chk.missing.map((m) => "Butuh " + m + ".")].join(" "))} <a href="research-variables.html">Ubah variabel</a>.`);
+    return;
+  }
+
   const transformsNow = () => (RS.load().selection && RS.load().selection.transformations) || {};
   const keyFor = () => JSON.stringify([st.datasetId, RS.load().selection]);
 
@@ -36,6 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const result = await Api.post("/api/analyze", {
         dataset_id: st.datasetId,
+        method: st.method,
         dependent_vars: nextSel.dependent,
         independent_vars: nextSel.independent,
         covariates: nextSel.covariates || [],

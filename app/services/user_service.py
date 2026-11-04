@@ -123,3 +123,18 @@ def delete_user(user_id: int) -> None:
     """Hapus akun. Riwayat analisis/kuesioner tetap ada (user_id menjadi NULL)."""
     with connect() as conn:
         conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
+
+def update_profile(user_id: int, name: str | None = None, email: str | None = None) -> None:
+    """Ubah nama dan/atau email. Email harus unik (tanpa membedakan huruf besar/kecil)."""
+    sets, args = [], []
+    if name is not None:
+        sets.append("name = ?")
+        args.append(name)
+    if email is not None:
+        sets.append("email = ?")
+        args.append(email)
+    if not sets:
+        return
+    with connect() as conn:
+        conn.execute(f"UPDATE users SET {', '.join(sets)} WHERE id = ?", (*args, user_id))

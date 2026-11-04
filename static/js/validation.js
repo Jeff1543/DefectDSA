@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
         result: null,
         resultKey: null,
       });
-      window.location.href = "research-variables.html";
+      window.location.href = "research-methods.html";
     } catch (err) {
       const expired = /sesi dataset|tidak ditemukan/i.test(err.message);
       showError(

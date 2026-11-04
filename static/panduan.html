@@ -68,8 +68,8 @@
         <ol class="doc-steps">
           <li><span><strong>Unggah data.</strong> Pilih file CSV atau XLSX dari komputer Anda.</span></li>
           <li><span><strong>Validasi data.</strong> Sistem menampilkan pratinjau tabel, jumlah baris dan kolom, serta data kosong per kolom.</span></li>
-          <li><span><strong>Pilih variabel.</strong> Kelompokkan kolom ke variabel dependen, independen, dan kovariat.</span></li>
-          <li><span><strong>Identifikasi metode.</strong> Sistem menentukan metode statistik yang paling sesuai.</span></li>
+          <li><span><strong>Pilih uji.</strong> Tentukan dulu uji yang dipakai: ANOVA, ANCOVA, MANOVA, MANCOVA, atau Regresi Linier.</span></li>
+          <li><span><strong>Pilih variabel.</strong> Kelompokkan kolom ke variabel dependen, independen, dan kovariat sesuai syarat uji yang dipilih.</span></li>
           <li><span><strong>Uji asumsi.</strong> Setiap asumsi ditampilkan lengkap dengan hipotesis (H0 dan H1), keputusan H0 diterima atau ditolak, grafik pendukung (histogram, Q-Q plot, boxplot, grafik sebar), dan saran perbaikan. Bila ada yang tidak terpenuhi, Anda dapat mencoba transformasi data lalu menguji ulang.</span></li>
           <li><span><strong>Hasil analisis.</strong> Tabel hasil uji multivariat ditampilkan.</span></li>
           <li><span><strong>Wawasan &amp; interpretasi.</strong> Hasil dijelaskan dalam bahasa sehari-hari, per faktor dan kovariat, lengkap dengan grafik (boxplot per kelompok, grafik sebar), arti praktis, dan langkah selanjutnya.</span></li>
@@ -165,7 +165,7 @@
           <li><strong>Peneliti</strong> dapat mendaftar sendiri dan melihat riwayat analisis ragam miliknya.</li>
           <li><strong>Administrator</strong> melihat ringkasan seluruh pengguna: jumlah analisis, hasil dan asumsi tiap analisis, respons kuesioner beserta skor per aspek dan per kecamatan, daftar pengguna, serta ekspor CSV.</li>
         </ul>
-        <p>Admin mengelola akun di tab <strong>Pengguna</strong>: mengubah peran, mengatur ulang kata sandi, dan menghapus akun. Setelah analisis selesai, halaman <strong>Laporan</strong> menyusun ringkasan lengkap yang bisa dicetak atau disimpan sebagai PDF.</p>
+        <p>Admin mengelola akun di tab <strong>Pengguna</strong>: menambah pengguna, mengubah nama/email/peran, mengatur ulang kata sandi, dan menghapus akun. Di tab <strong>Analisis</strong> admin dapat menghapus riwayat analisis, dan di tab <strong>Kuesioner</strong> admin dapat mengubah identitas responden atau menghapus respons. Setelah analisis selesai, halaman <strong>Laporan</strong> menyusun ringkasan lengkap yang bisa dicetak atau disimpan sebagai PDF.</p>
         <div class="doc-note">Akun administrator dibuat saat server pertama kali dijalankan. Atur <code>ADMIN_EMAIL</code> dan <code>ADMIN_PASSWORD</code> di environment untuk memakai akun sendiri; bila tidak diatur, kata sandi acak dicetak sekali di console server.</div>
       </section>
 
@@ -187,6 +187,9 @@
               <tr><td><code>POST /questionnaire</code></td><td>Menyimpan respons kuesioner dan menghitung skor di server.</td></tr>
               <tr><td><code>GET /me/analyses</code></td><td>Riwayat analisis milik pengguna yang masuk.</td></tr>
               <tr><td><code>GET /admin/*</code></td><td>Ringkasan, daftar analisis, kuesioner, pengguna, dan ekspor CSV (khusus admin).</td></tr>
+              <tr><td><code>POST/PATCH/DELETE /admin/users</code></td><td>Tambah, ubah, dan hapus pengguna (khusus admin).</td></tr>
+              <tr><td><code>DELETE /admin/analyses/{id}</code></td><td>Hapus riwayat analisis (khusus admin).</td></tr>
+              <tr><td><code>PATCH/DELETE /admin/questionnaires/{id}</code></td><td>Ubah identitas responden atau hapus respons (khusus admin).</td></tr>
             </tbody>
           </table>
         </div>

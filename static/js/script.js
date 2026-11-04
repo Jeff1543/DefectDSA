@@ -2,7 +2,7 @@
 // MANCOVA — Shared JS (dipakai di semua halaman)
 // ==========================================================================
 
-// --- Definisi 7 langkah alur Riset (Upload -> AI Insights) ---
+// --- Definisi 7 langkah alur Riset (Upload -> AI Insights): Upload, Validasi, Pilih Uji, Pilih Variabel, Uji Asumsi, Hasil, AI Insights ---
 const RESEARCH_STEPS = [
   {
     label: "UPLOAD DATA",
@@ -13,12 +13,12 @@ const RESEARCH_STEPS = [
     icon: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v2h6V3"/><path d="M8.5 12.5l2 2 4.5-4.5"/><path d="M9 17h6"/>',
   },
   {
-    label: "PILIH VARIABEL",
-    icon: '<path d="M4 6h16M4 12h10M4 18h6"/><circle cx="17" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.6" fill="currentColor" stroke="none"/>',
+    label: "PILIH UJI",
+    icon: '<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/><path d="M8 21h8M12 18v3"/>',
   },
   {
-    label: "IDENTIFIKASI METODE",
-    icon: '<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/><path d="M8 21h8M12 18v3"/>',
+    label: "PILIH VARIABEL",
+    icon: '<path d="M4 6h16M4 12h10M4 18h6"/><circle cx="17" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.6" fill="currentColor" stroke="none"/>',
   },
   {
     label: "UJI ASUMSI",

@@ -336,6 +336,45 @@ def export_analyses() -> list[dict]:
 
 
 # ------------------------------------------------------------------
+# HAPUS / UBAH (admin)
+# ------------------------------------------------------------------
+
+def delete_analysis(analysis_id: int) -> None:
+    with connect() as conn:
+        cur = conn.execute("DELETE FROM analyses WHERE id = ?", (analysis_id,))
+        if cur.rowcount == 0:
+            raise NotFoundError("Analisis tidak ditemukan.")
+
+
+def delete_questionnaire(qid: int) -> None:
+    with connect() as conn:
+        cur = conn.execute("DELETE FROM questionnaires WHERE id = ?", (qid,))
+        if cur.rowcount == 0:
+            raise NotFoundError("Respons kuesioner tidak ditemukan.")
+
+
+def update_questionnaire_identity(qid: int, changes: dict) -> None:
+    """
+    Memperbarui identitas responden (nama, umur, jk, telepon, alamat, kecamatan,
+    pengalaman). Jawaban dan skor TIDAK berubah, sehingga indeks tetap konsisten.
+    """
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT respondent FROM questionnaires WHERE id = ?", (qid,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError("Respons kuesioner tidak ditemukan.")
+
+        who = _loads(row["respondent"], {})
+        who.update(changes)
+
+        conn.execute(
+            "UPDATE questionnaires SET respondent = ?, kecamatan = ?, jenis_kelamin = ? WHERE id = ?",
+            (json.dumps(who), who.get("kecamatan"), who.get("jk"), qid),
+        )
+
+
+# ------------------------------------------------------------------
 # RINGKASAN DASHBOARD ADMIN
 # ------------------------------------------------------------------
 

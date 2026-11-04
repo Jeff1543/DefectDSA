@@ -5,6 +5,7 @@
 (function () {
   const esc = RS.esc;
   const PAGE = 15;
+  const KECAMATAN = ["Batu", "Bumiaji", "Junrejo"];
 
   const $ = (id) => document.getElementById(id);
   const panel = $("panel");
@@ -214,6 +215,7 @@
   async function renderAnalyses() {
     const base = isAdmin ? "/api/admin/analyses" : "/api/me/analyses";
     const d = await Api.get(`${base}?limit=${PAGE}&offset=${paging.analyses}`);
+    if (stepBackIfEmpty("analyses", d)) return renderAnalyses();
 
     const rows = d.items
       .map(
@@ -227,7 +229,9 @@
             : `<div class="muted">Y: ${esc(r.dependent_vars.join(", "))}</div><div class="muted">X: ${esc(r.independent_vars.join(", "))}${r.covariates.length ? `</div><div class="muted">Z: ${esc(r.covariates.join(", "))}` : ""}</div>`}</td>
           <td>${r.assumptions_met === null ? "–" : r.assumptions_met ? "Terpenuhi" : "Ada yang tidak"}</td>
           <td>${num(r.significant_effects)}</td>
-          <td><button class="link-btn" data-open-analysis="${r.id}">Detail</button></td>
+          <td><div class="row-actions"><button class="link-btn" data-open-analysis="${r.id}">Detail</button>${
+            isAdmin ? `<button class="link-btn danger" data-del-analysis="${r.id}" data-label="${esc(r.method)} · ${esc(r.filename || "tanpa file")}">Hapus</button>` : ""
+          }</div></td>
         </tr>`
       )
       .join("");
@@ -316,6 +320,7 @@
   // ------------------------------------------------------------------
   async function renderQuestionnaires() {
     const d = await Api.get(`/api/admin/questionnaires?limit=${PAGE}&offset=${paging.questionnaires}`);
+    if (stepBackIfEmpty("questionnaires", d)) return renderQuestionnaires();
     const rows = d.items
       .map(
         (r) => `<tr>
@@ -325,7 +330,9 @@
           <td>${esc(r.jk)}${r.umur ? ` · ${esc(r.umur)} th` : ""}</td>
           <td>${pct(r.persen_total)} <span class="muted">(${score(r.rata_total)})</span></td>
           <td><span class="type-tag">${esc(r.label_total)}</span></td>
-          <td><button class="link-btn" data-open-quest="${r.id}">Detail</button></td>
+          <td><div class="row-actions"><button class="link-btn" data-open-quest="${r.id}">Detail</button>
+            <button class="link-btn" data-edit-quest="${r.id}">Edit</button>
+            <button class="link-btn danger" data-del-quest="${r.id}" data-label="${esc(r.nama)}">Hapus</button></div></td>
         </tr>`
       )
       .join("");
@@ -369,6 +376,69 @@
     }
   }
 
+  function deleteAnalysis(btn) {
+    const id = btn.dataset.delAnalysis;
+    confirmDelete(
+      "Hapus analisis",
+      `Hapus riwayat analisis <strong>#${esc(id)}</strong> (${esc(btn.dataset.label)})? Data tidak dapat dipulihkan.`,
+      async () => {
+        await Api.request(`/api/admin/analyses/${id}`, { method: "DELETE" });
+        renderTab("analyses");
+      }
+    );
+  }
+
+  function deleteQuestionnaire(btn) {
+    const id = btn.dataset.delQuest;
+    confirmDelete(
+      "Hapus respons kuesioner",
+      `Hapus respons dari <strong>${esc(btn.dataset.label)}</strong>? Data tidak dapat dipulihkan dan akan hilang dari statistik gabungan.`,
+      async () => {
+        await Api.request(`/api/admin/questionnaires/${id}`, { method: "DELETE" });
+        renderTab("questionnaires");
+      }
+    );
+  }
+
+  async function editQuestionnaire(id) {
+    try {
+      const { item } = await Api.get(`/api/admin/questionnaires/${id}`);
+      const w = item.identitas || {};
+      formModal(
+        `Edit responden #${id}`,
+        `<p class="sub" style="margin:0;">Hanya identitas yang dapat diubah. Jawaban dan skor tetap, jadi indeks tidak berubah.</p>
+         <label>Nama<input type="text" name="nama" value="${esc(w.nama)}"></label>
+         <label>Umur<input type="number" name="umur" min="10" max="100" value="${esc(w.umur)}"></label>
+         <label>Jenis kelamin<select name="jk">${optionsHtml([["Laki-laki", "Laki-laki"], ["Perempuan", "Perempuan"]], w.jk)}</select></label>
+         <label>Telepon / WhatsApp<input type="text" name="telepon" value="${esc(w.telepon)}"></label>
+         <label>Kecamatan<select name="kecamatan">${optionsHtml(KECAMATAN.map((k) => [k, k]), w.kecamatan)}</select></label>
+         <label>Pengalaman beternak<input type="text" name="pengalaman" value="${esc(w.pengalaman)}"></label>
+         <label>Alamat peternakan<input type="text" name="alamat" value="${esc(w.alamat)}"></label>`,
+        "Simpan",
+        async (fd) => {
+          const body = {
+            nama: (fd.get("nama") || "").trim(),
+            umur: Number(fd.get("umur")),
+            jk: fd.get("jk"),
+            telepon: (fd.get("telepon") || "").trim(),
+            kecamatan: fd.get("kecamatan"),
+            pengalaman: (fd.get("pengalaman") || "").trim(),
+            alamat: (fd.get("alamat") || "").trim(),
+          };
+          if (body.nama.length < 2) throw new Error("Nama minimal 2 karakter.");
+          if (!(body.umur >= 10 && body.umur <= 100)) throw new Error("Umur harus antara 10 dan 100.");
+          if (body.telepon.length < 8) throw new Error("Nomor telepon minimal 8 karakter.");
+          if (!body.pengalaman) throw new Error("Pengalaman beternak wajib diisi.");
+          if (body.alamat.length < 5) throw new Error("Alamat minimal 5 karakter.");
+          await Api.request(`/api/admin/questionnaires/${id}`, { method: "PATCH", body });
+          renderTab("questionnaires");
+        }
+      );
+    } catch (err) {
+      handleApiError(err);
+    }
+  }
+
   // ------------------------------------------------------------------
   // Pengguna (admin)
   // ------------------------------------------------------------------
@@ -401,32 +471,93 @@
     });
   }
 
+  const optionsHtml = (items, selected) =>
+    items.map(([v, label]) => `<option value="${esc(v)}" ${v === selected ? "selected" : ""}>${esc(label)}</option>`).join("");
+
+  function confirmDelete(title, message, onDelete) {
+    formModal(title, `<p>${message}</p>`, "Ya, hapus", onDelete, true);
+  }
+
+  // Bila halaman terakhir jadi kosong setelah hapus, mundur satu halaman.
+  function stepBackIfEmpty(kind, d) {
+    if (!d.items.length && paging[kind] > 0) {
+      paging[kind] = Math.max(0, paging[kind] - PAGE);
+      return true;
+    }
+    return false;
+  }
+
   async function renderUsers() {
     const d = await Api.get("/api/admin/users");
     const rows = d.items
       .map((u) => {
-        const actions =
-          u.id === user.id
-            ? '<span class="muted">Akun Anda</span>'
-            : `<div class="row-actions">
-                <button class="link-btn" data-user-role="${u.id}" data-role="${u.role === "admin" ? "peneliti" : "admin"}" data-name="${esc(u.name)}">Jadikan ${u.role === "admin" ? "Peneliti" : "Admin"}</button>
-                <button class="link-btn" data-user-pw="${u.id}" data-name="${esc(u.name)}">Reset sandi</button>
-                <button class="link-btn danger" data-user-del="${u.id}" data-name="${esc(u.name)}">Hapus</button></div>`;
+        const own = u.id === user.id;
+        const actions = `<div class="row-actions">
+            <button class="link-btn" data-user-edit="${u.id}">Edit</button>
+            ${own ? "" : `<button class="link-btn" data-user-role="${u.id}" data-role="${u.role === "admin" ? "peneliti" : "admin"}" data-name="${esc(u.name)}">Jadikan ${u.role === "admin" ? "Peneliti" : "Admin"}</button>`}
+            <button class="link-btn" data-user-pw="${u.id}" data-name="${esc(u.name)}">Reset sandi</button>
+            ${own ? '<span class="muted">Akun Anda</span>' : `<button class="link-btn danger" data-user-del="${u.id}" data-name="${esc(u.name)}">Hapus</button>`}</div>`;
         return `<tr><td><strong>${esc(u.name)}</strong></td><td>${esc(u.email)}</td>
           <td><span class="role-pill ${u.role}">${u.role === "admin" ? "Admin" : "Peneliti"}</span></td>
           <td class="nowrap">${esc(RS.fmtDate(u.created_at))}</td><td>${num(u.analyses)}</td><td>${num(u.questionnaires)}</td><td>${actions}</td></tr>`;
       })
       .join("");
-    panel.innerHTML = `<div class="dash-card"><div class="tbl-head"><h3>Pengguna terdaftar</h3></div>
-      <p class="sub">Peneliti mendaftar sendiri lewat Portal Peneliti. Di sini Anda mengatur peran, mengatur ulang kata sandi, atau menghapus akun. Riwayat analisis dan kuesioner milik akun yang dihapus tetap tersimpan (tanpa nama pengguna).</p>
+    usersCache = Object.fromEntries(d.items.map((u) => [u.id, u]));
+    panel.innerHTML = `<div class="dash-card"><div class="tbl-head"><h3>Pengguna terdaftar</h3>
+        <button type="button" class="btn btn-primary btn-sm" id="addUser">+ Tambah pengguna</button></div>
+      <p class="sub">Tambahkan akun baru, ubah nama/email/peran, atur ulang kata sandi, atau hapus akun. Riwayat analisis dan kuesioner milik akun yang dihapus tetap tersimpan (tanpa nama pengguna).</p>
       <div class="dash-table-wrap"><table class="dash-table"><thead><tr><th>Nama</th><th>Email</th><th>Peran</th><th>Bergabung</th><th>Analisis</th><th>Kuesioner</th><th>Aksi</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    $("addUser").addEventListener("click", addUser);
+  }
+
+  let usersCache = {};
+
+  function addUser() {
+    formModal(
+      "Tambah pengguna",
+      `<label>Nama lengkap<input type="text" name="name" autocomplete="off"></label>
+       <label>Email<input type="email" name="email" autocomplete="off"></label>
+       <label>Kata sandi (min. 8 karakter)<input type="password" name="pw" autocomplete="new-password"></label>
+       <label>Peran<select name="role">${optionsHtml([["peneliti", "Peneliti"], ["admin", "Admin"]], "peneliti")}</select></label>`,
+      "Tambah",
+      async (fd) => {
+        const name = (fd.get("name") || "").trim();
+        const email = (fd.get("email") || "").trim();
+        const pw = fd.get("pw") || "";
+        if (name.length < 2) throw new Error("Nama minimal 2 karakter.");
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Format email belum valid.");
+        if (pw.length < 8) throw new Error("Kata sandi minimal 8 karakter.");
+        await Api.post("/api/admin/users", { name, email, password: pw, role: fd.get("role") });
+        renderTab("users");
+      }
+    );
   }
 
   function userAction(btn) {
-    const id = btn.dataset.userRole || btn.dataset.userPw || btn.dataset.userDel;
+    const id = btn.dataset.userEdit || btn.dataset.userRole || btn.dataset.userPw || btn.dataset.userDel;
     const name = btn.dataset.name;
 
-    if (btn.dataset.userRole) {
+    if (btn.dataset.userEdit) {
+      const u = usersCache[id] || {};
+      formModal(
+        "Edit pengguna",
+        `<label>Nama lengkap<input type="text" name="name" value="${esc(u.name)}"></label>
+         <label>Email<input type="email" name="email" value="${esc(u.email)}"></label>`,
+        "Simpan",
+        async (fd) => {
+          const newName = (fd.get("name") || "").trim();
+          const email = (fd.get("email") || "").trim();
+          if (newName.length < 2) throw new Error("Nama minimal 2 karakter.");
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Format email belum valid.");
+          await Api.request(`/api/admin/users/${id}`, { method: "PATCH", body: { name: newName, email } });
+          if (Number(id) === user.id) {
+            user.name = newName;
+            $("userName").textContent = newName;
+          }
+          renderTab("users");
+        }
+      );
+    } else if (btn.dataset.userRole) {
       const role = btn.dataset.role;
       formModal(
         "Ubah peran",
@@ -450,15 +581,13 @@
         }
       );
     } else {
-      formModal(
+      confirmDelete(
         "Hapus akun",
-        `<p>Hapus akun <strong>${esc(name)}</strong>? Akun tidak dapat dipulihkan. Riwayat analisis dan kuesioner miliknya tetap tersimpan tanpa nama.</p>`,
-        "Ya, hapus",
+        `Hapus akun <strong>${esc(name)}</strong>? Akun tidak dapat dipulihkan. Riwayat analisis dan kuesioner miliknya tetap tersimpan tanpa nama.`,
         async () => {
           await Api.request(`/api/admin/users/${id}`, { method: "DELETE" });
           renderTab("users");
-        },
-        true
+        }
       );
     }
   }
@@ -487,7 +616,13 @@
     if (q) return openQuestionnaire(q.dataset.openQuest);
     const g = e.target.closest("[data-goto]");
     if (g) return renderTab(g.dataset.goto);
-    const u = e.target.closest("[data-user-role],[data-user-pw],[data-user-del]");
+    const da = e.target.closest("[data-del-analysis]");
+    if (da) return deleteAnalysis(da);
+    const dq = e.target.closest("[data-del-quest]");
+    if (dq) return deleteQuestionnaire(dq);
+    const eq = e.target.closest("[data-edit-quest]");
+    if (eq) return editQuestionnaire(eq.dataset.editQuest);
+    const u = e.target.closest("[data-user-edit],[data-user-role],[data-user-pw],[data-user-del]");
     if (u) userAction(u);
   });
 
@@ -536,7 +671,7 @@
 
     $("dashTitle").textContent = isAdmin ? "Dashboard Administrator" : "Dashboard Peneliti";
     $("dashSub").textContent = isAdmin
-      ? "Pantau seluruh aktivitas pengguna: hasil analisis ragam, respons kuesioner, dan statistik gabungan."
+      ? "Pantau dan kelola seluruh aktivitas: pengguna, hasil analisis ragam, dan respons kuesioner (tambah, ubah, hapus)."
       : "Lihat riwayat analisis Anda yang tersimpan.";
 
     const tabs = isAdmin
