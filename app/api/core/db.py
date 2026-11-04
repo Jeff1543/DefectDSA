@@ -10,7 +10,7 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-from app.core.config import DATA_DIR
+from app.api.core.config import DATA_DIR
 
 DB_PATH = Path(os.environ.get("APP_DB_PATH", DATA_DIR / "app.db"))
 

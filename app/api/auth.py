@@ -5,12 +5,12 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field, field_validator
 
 from app.api.deps import require_user
-from app.core.security import (
+from app.api.core.security import (
     DUMMY_HASH,
     create_token,
     verify_password,
 )
-from app.services.user_service import (
+from app.api.services.user_service import (
     EMAIL_RE,
     check_password,
     create_user,
@@ -18,7 +18,7 @@ from app.services.user_service import (
     public_user,
     set_password,
 )
-from app.utils.errors import AuthError, ConflictError, RateLimitError
+from app.api.utils.errors import AuthError, ConflictError, RateLimitError
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 

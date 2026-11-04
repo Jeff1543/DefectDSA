@@ -17,8 +17,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.core.db import connect, init_db  # noqa: E402
-from app.services import user_service  # noqa: E402
+from app.api.core.db import connect, init_db  # noqa: E402
+from app.api.services import user_service  # noqa: E402
 
 
 def main() -> None:

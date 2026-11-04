@@ -31,7 +31,7 @@
   --shadow-nav: 0px 12px 40px rgba(0, 0, 0, 0.04);
 
   --container-w: 1184px;
-  --navbar-w: 1360px; /* navbar sedikit lebih lebar dari konten */
+  --navbar-w: 1080px; /* navbar sedikit lebih lebar dari konten */
 }
 
 * {
@@ -117,7 +117,7 @@ img {
   background: var(--white);
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-nav);
-  padding: 1px 16px 1px 28px;
+  padding: 10px 16px 10px 28px;
 }
 
 .nav-logo {

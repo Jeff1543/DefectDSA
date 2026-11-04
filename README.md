@@ -10,7 +10,9 @@ Untuk requirement dan workflow pengguna, lihat `FUNCTIONAL_SPECIFICATION_V1.md`.
 
 ## 1. Architecture
 
-Aplikasi menggunakan arsitektur monolithic sederhana dengan frontend dan backend berada dalam satu service.
+Aplikasi berjalan sebagai satu service FastAPI saat dikembangkan secara lokal.
+Untuk deployment Cloudflare, frontend dapat disajikan oleh Worker Alchemy dan
+request API diteruskan ke backend FastAPI yang di-host secara terpisah.
 
 ```text
 ┌─────────────────────────────────────────┐
@@ -21,26 +23,15 @@ Aplikasi menggunakan arsitektur monolithic sederhana dengan frontend dan backend
                     │
                     │ HTTP / JSON / File
                     ▼
-┌─────────────────────────────────────────┐
-│                 FASTAPI                 │
-│                                         │
-│  Upload & Data Profiling                 │
-│  Validation                              │
-│  Data Cleaning (Preprocessing)           │
-│  MANCOVA (Core Analytics Engine)         │
-│  Generative AI Interpretation            │
-│  Result Formatting                       │
-└───────────────────┬─────────────────────┘
-                    │
-                    ▼
-              Browser Result
-                    │
-               ┌────┴────┐
-               ▼         ▼
-           Download    Discard
+         Local: FastAPI serves the UI and API
+
+         Cloudflare: Worker serves the UI
+                     and proxies /api to FastAPI
 ```
 
-Frontend tidak di-deploy secara terpisah. FastAPI juga bertugas menyajikan file frontend.
+For local development, FastAPI serves both the UI and API. For Cloudflare
+deployment, the static UI can be served by Alchemy while the Python API stays
+on a host that supports its numerical dependencies.
 
 ---
 
@@ -89,8 +80,9 @@ Daftar dependency final terdapat pada `requirements.txt`.
 ### Infrastructure
 
 - GitHub sebagai source-code repository
-- Cloud Python web service sebagai hosting
-- Tidak menggunakan database
+- FastAPI dapat di-host pada Python web service
+- Frontend dapat di-host pada Cloudflare Workers menggunakan Alchemy
+- SQLite menyimpan akun dan riwayat; gunakan storage persisten pada host backend
 - Tidak menggunakan Docker
 - Tidak menggunakan Redis
 - Tidak menggunakan Celery
@@ -105,41 +97,24 @@ Daftar dependency final terdapat pada `requirements.txt`.
 Farmer_Information_System/
 │
 ├── app/
-│   ├── main.py
 │   ├── api/
-│   │   └── analysis.py
-│   ├── core/
-│   │   └── config.py
-│   ├── schemas/
-│   │   └── analysis.py
-│   ├── services/
-│   │   ├── file_service.py
-│   │   ├── preprocessing_service.py
-│   │   ├── mancova_service.py
-│   │   └── interpretation_service.py
-│   └── utils/
-│       └── errors.py
+│   │   ├── main.py
+│   │   ├── core/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   └── utils/
+│   └── static/
+│       ├── index.html
+│       ├── css/
+│       └── js/
 │
-├── static/
-│   ├── index.html
-│   ├── about.html
-│   ├── features.html
-│   ├── laporan.html
-│   ├── research-upload.html
-│   ├── research-variables.html
-│   ├── research-results.html
-│   ├── css/
-│   └── js/
-│
+├── cloudflare/worker.ts
+├── alchemy.run.ts
 ├── requirements.txt
-├── .gitignore
-├── DESIGN_SYSTEM.md
-├── FUNCTIONAL_SPECIFICATION_V1.md
-├── API_CONTRACT_V1.md
 └── README.md
 ```
 
-### `app/main.py`
+### `app/api/main.py`
 
 Berisi konfigurasi aplikasi FastAPI, exception handler global, penyajian file statis, beserta *root endpoint* frontend.
 
@@ -147,37 +122,38 @@ Berisi konfigurasi aplikasi FastAPI, exception handler global, penyajian file st
 
 Berisi seluruh endpoint API (`/api/health`, `/api/upload`, `/api/clean`, `/api/analyze`), merangkai pemanggilan service-service di bawah.
 
-### `app/core/config.py`
+### `app/api/core/config.py`
 
 Berisi konfigurasi aplikasi: batas ukuran file, ekstensi yang diizinkan, jumlah baris preview, TTL dataset, batas minimum variabel per kategori.
 
-### `app/schemas/analysis.py`
+### `app/api/schemas/analysis.py`
 
 Berisi skema Pydantic untuk request beserta validasi kontrak (mis. `CleanRequest`, `AnalyzeRequest`).
 
-### `app/services/file_service.py`
+### `app/api/services/file_service.py`
 
 Berisi penyimpanan dataset sementara di memori, data profiling, beserta mekanisme TTL.
 
-### `app/services/preprocessing_service.py`
+### `app/api/services/preprocessing_service.py`
 
 Berisi logika *data cleaning* (imputasi mean/median/modus, *drop* baris) beserta fungsi `clean_dataset()` yang menyatukan hasilnya kembali ke penyimpanan dataset.
 
-### `app/services/mancova_service.py`
+### `app/api/services/mancova_service.py`
 
 Berisi validasi struktur variabel, pengujian asumsi (linieritas, normalitas, Box's M, homogenitas kemiringan regresi), perhitungan MANCOVA, beserta penyusunan data *dashboard*.
 
-### `app/services/interpretation_service.py`
+### `app/api/services/interpretation_service.py`
 
 Berisi pemanggilan Generative AI (Anthropic API) beserta narasi *fallback* berbasis aturan.
 
-### `app/utils/errors.py`
+### `app/api/utils/errors.py`
 
 Berisi kelas-kelas *custom exception* (`FileError`, `CleaningError`, `VariableError`, dst.) yang ditangkap oleh *exception handler* di `main.py`.
 
-### `static/`
+### `app/static/`
 
-Berisi seluruh frontend aplikasi (belum sepenuhnya tersambung ke API — lihat bagian *Known Gaps*).
+Berisi file frontend yang disajikan FastAPI saat lokal atau Cloudflare Worker
+saat deployment terpisah.
 
 ---
 
@@ -215,9 +191,10 @@ Validasi frontend hanya digunakan untuk meningkatkan pengalaman pengguna. Valida
 
 ---
 
-## 5. Stateless Architecture
+## 5. Data Persistence
 
-Aplikasi tidak menggunakan database atau persistent storage.
+Dataset unggahan diproses sementara di memori dan memiliki TTL. Akun pengguna,
+riwayat analisis, dan respons kuesioner disimpan di SQLite.
 
 Request diproses dengan pola:
 
@@ -239,12 +216,9 @@ Request Finished
 Dataset Dihapus Otomatis Setelah TTL
 ```
 
-Sistem tidak menyimpan secara permanen:
-
-- akun pengguna,
-- dataset pengguna,
-- riwayat analisis,
-- hasil analisis.
+Dataset unggahan tidak disimpan permanen. Database SQLite harus berada pada
+storage persisten di host backend agar akun dan riwayat tetap ada setelah
+restart. Gunakan `APP_SECRET` yang stabil agar token login tidak berubah.
 
 Jika pengguna memilih download, hasil dibuat untuk kebutuhan download dan tidak dijadikan arsip permanen aplikasi.
 
@@ -389,7 +363,7 @@ pip install -r requirements.txt
 ### Menjalankan Aplikasi
 
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.api.main:app --reload
 ```
 
 Buka browser:
@@ -404,6 +378,13 @@ Dokumentasi API FastAPI tersedia di:
 http://127.0.0.1:8000/docs
 ```
 
+## Cloudflare frontend deployment
+
+Alchemy deploys `app/static` to a Cloudflare Worker and proxies `/api`
+requests to a separately hosted FastAPI backend. Configure the backend URL
+as `API_ORIGIN`; deployment steps and backend persistence requirements are in
+[docs/DEPLOY_CLOUDFLARE.md](./docs/DEPLOY_CLOUDFLARE.md).
+
 ---
 
 ## 9. Production Start
@@ -411,7 +392,7 @@ http://127.0.0.1:8000/docs
 Command untuk menjalankan aplikasi pada hosting:
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
+uvicorn app.api.main:app --host 0.0.0.0 --port $PORT
 ```
 
 `$PORT` disediakan oleh platform hosting.
@@ -449,10 +430,11 @@ pip install -r requirements.txt
 ### Start Command
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
+uvicorn app.api.main:app --host 0.0.0.0 --port $PORT
 ```
 
-Frontend dan backend tetap berada dalam satu service.
+Pada deployment Cloudflare, frontend berjalan pada Worker dan `/api` diproxy
+ke backend FastAPI terpisah. Lihat `docs/DEPLOY_CLOUDFLARE.md`.
 
 ---
 
@@ -546,11 +528,13 @@ Jangan menambahkan Redis, Celery, queue, caching, atau worker sebelum terdapat m
 
 ### No Unnecessary Persistence
 
-Jika sistem tidak membutuhkan histori, maka tidak perlu database.
+Simpan hanya data yang diperlukan aplikasi. Akun dan riwayat menggunakan SQLite;
+dataset unggahan tetap sementara di memori.
 
 ### One Service First
 
-Frontend dan backend tetap berada dalam satu service sampai terdapat alasan teknis untuk memisahkannya.
+FastAPI menyajikan frontend dan API saat lokal. Deployment Cloudflare dapat
+memisahkan frontend Worker dari backend Python.
 
 ### Backend Owns Validation
 
@@ -570,11 +554,7 @@ Fitur berikut secara eksplisit **di luar scope V1** (lihat `API_CONTRACT_V1.md` 
 - pengembangan formulasi/modifikasi baru terhadap metode MANCOVA,
 - visualisasi tambahan,
 - export laporan sebagai endpoint download terpisah,
-- autentikasi,
-- histori analisis,
-- database.
-
-Fitur tersebut **bukan bagian dari arsitektur awal**.
+- integrasi hosting/database terkelola tambahan.
 
 Penambahan infrastructure harus dilakukan berdasarkan requirement nyata, bukan asumsi.
 
@@ -599,10 +579,10 @@ Data Processing
   statsmodels
 
 Database
-  None
+  SQLite for users, histories, and questionnaires
 
 Persistent Storage
-  None
+  Required for the backend SQLite database
 
 Task Queue
   None
@@ -620,17 +600,16 @@ Microservices
   None
 
 Deployment
-  Single FastAPI Web Service
+  Local: FastAPI serves frontend and API
+  Cloudflare: Alchemy Worker frontend proxies to FastAPI
 ```
 
 ---
 
 ## 17. Known Gaps
 
-Status jujur bagian yang **belum selesai** per revisi ini:
+Deployment still requires a public Python backend URL in `API_ORIGIN`.
 
-- **Frontend belum tersambung ke API sungguhan.** Beberapa file JS/CSS yang dirujuk `static/*.html` (`js/script.js`, `js/upload.js`, `js/variables.js`) belum ada; `research-results.html` belum memanggil `/api/analyze`.
-- **Box's M Test beserta homogenitas kemiringan regresi** sudah diimplementasikan (lihat `mancova_service.py`), tetapi merupakan pendekatan chi-square baku (bukan F-approximation) dengan keterbatasan sensitivitas terhadap ukuran sampel besar — hasil sebaiknya tetap ditinjau oleh tim statistik.
 - **`_DATASETS` di memori** tidak cocok untuk deployment multi-worker/multi-instance. Cukup untuk prototipe single-worker.
 - **`risk_level` pada Defect Risk Map** dihitung dengan pendekatan sederhana (deviasi terhadap rata-rata antar lokasi), bukan hasil klasifikasi statistik formal.
 
@@ -651,7 +630,7 @@ Sistem harus tetap sederhana sampai kebutuhan nyata membuktikan bahwa kompleksit
 
 ```bash
 pip install -r requirements.txt
-python run.py            # atau: uvicorn app.main:app --reload
+python run.py            # atau: uvicorn app.api.main:app --reload
 # buka http://127.0.0.1:8000/  (otomatis diarahkan ke /static/index.html)
 ```
 

@@ -19,7 +19,7 @@ def main() -> None:
 
     threading.Timer(1.5, lambda: webbrowser.open(url)).start()
     print(f"Aplikasi berjalan di {url}  (hentikan dengan Ctrl+C)")
-    uvicorn.run("app.main:app", host="127.0.0.1", port=port)
+    uvicorn.run("app.api.main:app", host="127.0.0.1", port=port)
 
 
 if __name__ == "__main__":

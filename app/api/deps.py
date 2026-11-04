@@ -1,8 +1,8 @@
 from fastapi import Depends, Header
 
-from app.core.security import verify_token
-from app.services.user_service import get_by_id
-from app.utils.errors import AuthError, ForbiddenError
+from app.api.core.security import verify_token
+from app.api.services.user_service import get_by_id
+from app.api.utils.errors import AuthError, ForbiddenError
 
 
 def get_current_user_optional(authorization: str | None = Header(default=None)):

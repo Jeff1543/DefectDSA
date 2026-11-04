@@ -2,10 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const JS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../static/js");
+const JS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../app/static/js");
 
 /**
- * Skrip di static/js adalah skrip klasik (bukan modul ES): ia memakai `const RS = ...`
+ * Skrip di app/static/js adalah skrip klasik (bukan modul ES): ia memakai `const RS = ...`
  * atau menempel ke `window`. Helper ini menjalankannya di dalam lingkungan jsdom dan
  * mengembalikan nama-nama yang diminta, tanpa mengubah kode sumbernya.
  *

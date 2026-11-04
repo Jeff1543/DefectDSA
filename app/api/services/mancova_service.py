@@ -9,7 +9,7 @@ from statsmodels.stats.anova import anova_lm
 from statsmodels.stats.diagnostic import linear_reset
 from scipy import stats
 
-from app.core.config import MAX_FACTOR_LEVELS
+from app.api.core.config import MAX_FACTOR_LEVELS
 
 
 class MancovaService:

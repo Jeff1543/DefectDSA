@@ -3,8 +3,8 @@ import re
 import secrets
 from datetime import datetime, timezone
 
-from app.core.db import connect
-from app.core.security import hash_password, verify_password
+from app.api.core.db import connect
+from app.api.core.security import hash_password, verify_password
 
 EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 

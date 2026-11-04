@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import APIRouter
 
-from app.core.config import STATIC_DIR
+from app.api.core.config import STATIC_DIR
 
 router = APIRouter(prefix="/api", tags=["Gallery"])
 

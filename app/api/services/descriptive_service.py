@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from app.core.config import MAX_FACTOR_LEVELS
-from app.utils.errors import VariableError
+from app.api.core.config import MAX_FACTOR_LEVELS
+from app.api.utils.errors import VariableError
 
 MAX_VARIABLES = 60
 MAX_GROUPS = 20

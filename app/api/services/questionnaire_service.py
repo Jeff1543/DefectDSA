@@ -1,6 +1,6 @@
-from app.utils.errors import ValidationError
+from app.api.utils.errors import ValidationError
 
-# Harus sama dengan static/js/kuesioner-data.js (id, urutan, jumlah pertanyaan).
+# Harus sama dengan app/static/js/kuesioner-data.js (id, urutan, jumlah pertanyaan).
 KATEGORI = [
     ("formula_pakan", "Formula Pakan", "Formula Pakan"),
     ("bibit_unggul", "Bibit Unggul", "Bibit Unggul"),

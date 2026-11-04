@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field, field_validator
 
 from app.api.deps import get_current_user_optional
-from app.services.history_service import save_questionnaire
-from app.services.questionnaire_service import KECAMATAN, hitung_skor
-from app.utils.errors import ValidationError
+from app.api.services.history_service import save_questionnaire
+from app.api.services.questionnaire_service import KECAMATAN, hitung_skor
+from app.api.utils.errors import ValidationError
 
 router = APIRouter(prefix="/api/questionnaire", tags=["Questionnaire"])
 

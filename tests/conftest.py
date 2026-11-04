@@ -12,7 +12,7 @@ import pandas as pd  # noqa: E402
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app.main import app  # noqa: E402
+from app.api.main import app  # noqa: E402
 
 
 @pytest.fixture(scope="session")

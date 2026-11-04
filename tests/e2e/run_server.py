@@ -25,12 +25,12 @@ sys.path.insert(0, str(ROOT))
 import uvicorn  # noqa: E402
 
 # Data awal untuk tes dashboard admin: beberapa riwayat analisis (STATDES) yang bisa dihapus.
-from app.core.db import init_db  # noqa: E402
-from app.services import history_service as hs  # noqa: E402
+from app.api.core.db import init_db  # noqa: E402
+from app.api.services import history_service as hs  # noqa: E402
 
 init_db()
 for i in range(1, 9):
     hs.save_descriptive(None, f"seed-{i}.csv", 10 + i, ["Y1", "Y2"], None, {"variables": []})
 
 port = int(os.environ.get("E2E_PORT", "8765"))
-uvicorn.run("app.main:app", host="127.0.0.1", port=port, log_level="warning")
+uvicorn.run("app.api.main:app", host="127.0.0.1", port=port, log_level="warning")

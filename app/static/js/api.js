@@ -33,7 +33,7 @@
 
   const NO_BACKEND_HELP =
     "Server aplikasi tidak terdeteksi. Jalankan server dengan perintah `python run.py` " +
-    "(atau `uvicorn app.main:app --reload`) di folder proyek, lalu buka http://127.0.0.1:8000/ " +
+    "(atau `uvicorn app.api.main:app --reload`) di folder proyek, lalu buka http://127.0.0.1:8000/ " +
     "- jangan membuka halaman lewat Live Server atau dengan klik dua kali pada file HTML.";
 
   class ApiError extends Error {

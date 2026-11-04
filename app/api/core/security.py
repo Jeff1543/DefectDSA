@@ -12,7 +12,7 @@ import secrets
 import time
 from functools import lru_cache
 
-from app.core.config import DATA_DIR
+from app.api.core.config import DATA_DIR
 
 TOKEN_TTL_SECONDS = 7 * 24 * 3600
 

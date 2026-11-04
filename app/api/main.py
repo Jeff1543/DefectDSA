@@ -11,10 +11,10 @@ from app.api.analysis import router as analysis_router
 from app.api.auth import router as auth_router
 from app.api.gallery import router as gallery_router
 from app.api.questionnaire import router as questionnaire_router
-from app.core.config import STATIC_DIR
-from app.core.db import init_db
-from app.services.user_service import ensure_admin
-from app.utils.errors import AppError
+from app.api.core.config import STATIC_DIR
+from app.api.core.db import init_db
+from app.api.services.user_service import ensure_admin
+from app.api.utils.errors import AppError
 
 
 @asynccontextmanager

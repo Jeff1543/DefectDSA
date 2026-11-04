@@ -8,9 +8,9 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field, field_validator
 
 from app.api.deps import require_admin, require_user
-from app.services import history_service as hs
-from app.services.questionnaire_service import KECAMATAN
-from app.services.user_service import (
+from app.api.services import history_service as hs
+from app.api.services.questionnaire_service import KECAMATAN
+from app.api.services.user_service import (
     EMAIL_RE,
     create_user,
     delete_user,
@@ -22,7 +22,7 @@ from app.services.user_service import (
     set_role,
     update_profile,
 )
-from app.utils.errors import ConflictError, ForbiddenError, NotFoundError
+from app.api.utils.errors import ConflictError, ForbiddenError, NotFoundError
 
 router = APIRouter(prefix="/api", tags=["Dashboard"])
 

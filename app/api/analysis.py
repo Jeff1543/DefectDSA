@@ -1,27 +1,27 @@
 from fastapi import APIRouter, Depends, File, UploadFile
 
 from app.api.deps import get_current_user_optional
-from app.schemas.analysis import (
+from app.api.schemas.analysis import (
     AnalyzeRequest,
     CleanRequest,
     DescriptiveRequest,
 )
-from app.services.file_service import (
+from app.api.services.file_service import (
     get_dataset,
     get_filename,
     is_cleaned,
     upload_dataset,
 )
-from app.services.descriptive_service import DescriptiveService
-from app.services import transform_service
-from app.services.history_service import save_analysis, save_descriptive
-from app.services.insight_service import InsightService
-from app.services.interpretation_service import InterpretationService
-from app.services.mancova_service import MancovaService
-from app.services.preprocessing_service import clean_dataset
-from app.services.user_service import now_iso
-from app.utils.errors import MancovaError, VariableError
-from app.utils.jsonutil import clean_json
+from app.api.services.descriptive_service import DescriptiveService
+from app.api.services import transform_service
+from app.api.services.history_service import save_analysis, save_descriptive
+from app.api.services.insight_service import InsightService
+from app.api.services.interpretation_service import InterpretationService
+from app.api.services.mancova_service import MancovaService
+from app.api.services.preprocessing_service import clean_dataset
+from app.api.services.user_service import now_iso
+from app.api.utils.errors import MancovaError, VariableError
+from app.api.utils.jsonutil import clean_json
 
 
 router = APIRouter(

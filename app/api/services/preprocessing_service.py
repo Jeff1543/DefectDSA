@@ -1,11 +1,11 @@
 import pandas as pd
 
-from app.services.file_service import (
+from app.api.services.file_service import (
     get_dataset,
     mark_cleaned,
     set_dataset,
 )
-from app.utils.errors import CleaningError
+from app.api.utils.errors import CleaningError
 
 
 class PreprocessingService:

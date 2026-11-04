@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from app.utils.errors import VariableError
+from app.api.utils.errors import VariableError
 
 LABELS = {
     "log": "log(x)",

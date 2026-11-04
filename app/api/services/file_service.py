@@ -11,14 +11,14 @@ from io import BytesIO
 import pandas as pd
 from openpyxl import load_workbook
 
-from app.core.config import (
+from app.api.core.config import (
     ALLOWED_EXTENSIONS,
     DATASET_TTL_SECONDS,
     MAX_FACTOR_LEVELS,
     MAX_FILE_SIZE_BYTES,
     PREVIEW_ROWS,
 )
-from app.utils.errors import FileError
+from app.api.utils.errors import FileError
 
 
 # ============================================================

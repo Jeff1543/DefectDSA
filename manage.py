@@ -11,8 +11,8 @@ Perintah pengelolaan lewat terminal (tanpa perlu membuka dashboard).
 import getpass
 import sys
 
-from app.core.db import DB_PATH, connect, init_db
-from app.services import user_service as us
+from app.api.core.db import DB_PATH, connect, init_db
+from app.api.services import user_service as us
 
 
 def _ask_password() -> str:

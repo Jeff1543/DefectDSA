@@ -113,7 +113,7 @@ def test_upload_duplicate_and_blank_headers_are_renamed(client):
 @pytest.mark.parametrize("name,rows", [("contoh-data.xlsx", 24)])
 def test_bundled_templates_can_be_uploaded(client, name, rows):
     from pathlib import Path
-    path = Path(__file__).resolve().parents[1] / "static" / name
+    path = Path(__file__).resolve().parents[1] / "app" / "static" / name
     r = client.post("/api/upload", files={"file": (name, path.read_bytes(), "application/octet-stream")})
     assert r.status_code == 200, r.text
     cols = {c["name"]: c["dtype"] for c in r.json()["profile"]["columns"]}
@@ -123,7 +123,7 @@ def test_bundled_templates_can_be_uploaded(client, name, rows):
 
 def test_blank_template_is_rejected_with_clear_message(client):
     from pathlib import Path
-    path = Path(__file__).resolve().parents[1] / "static" / "templat-data.xlsx"
+    path = Path(__file__).resolve().parents[1] / "app" / "static" / "templat-data.xlsx"
     r = client.post("/api/upload", files={"file": ("templat-data.xlsx", path.read_bytes(), "application/octet-stream")})
     assert r.status_code in (400, 422) and "kosong" in r.json()["message"].lower()
 
