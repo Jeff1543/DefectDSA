@@ -9,3 +9,4 @@ statsmodels
 pydantic
 httpx
 
+libsql
